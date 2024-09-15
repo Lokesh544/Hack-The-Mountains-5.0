@@ -5,6 +5,7 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import "dotenv/config";
 import userRouter from "./router/userRouter.js";
+import chatbotRouter from "./router/chatbotRouter.js";
 
 const port = 3000;
 const app = express();
@@ -30,11 +31,12 @@ app.get("/", (req, res) => {
 });
 
 app.use("/user", userRouter);
+app.use("/chat", chatbotRouter);
 
 io.on("connection", (socket) => {
   socket.on("teir_1", (arg) => {
     if (!arg.text) return;
-    socket.emit("teir_1", { username: arg.user.username, msg: arg.text });
+    io.emit("teir_1", { username: arg.user.username, msg: arg.text });
   });
 });
 

@@ -9,31 +9,14 @@ import {
 } from "react-native";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
-import { useContext, useEffect, useRef, useState } from "react";
-import { socket } from "@/hooks/useSocket";
+import { useContext, useRef, useState } from "react";
 import AuthContext from "@/components/provider/AuthContext";
 import PleaseLogin from "@/components/basic/PleaseLogin";
 
 export default function Ask() {
   const [text, onChangeText] = useState<string>();
-  const [msgs, setMsgs] = useState<{ username: string; msg: string }[]>([
-    { username: "lokesh", msg: "Yeah, How are you?" },
-    { username: "Jas", msg: "Great, Great" },
-  ]);
+  const [msgs, setMsgs] = useState<{ bot: boolean; msg: string }[]>([]);
   const inputRef = useRef<TextInput>(null);
-
-  useEffect(() => {
-    const event = "teir_1";
-    const listener = (arg: any) => {
-      setMsgs((value) => {
-        return [arg, ...value];
-      });
-    };
-    socket.on(event, listener);
-    return () => {
-      socket.off(event, listener);
-    };
-  }, []);
 
   const { getUser } = useContext(AuthContext);
   if (!getUser()) {
@@ -41,11 +24,30 @@ export default function Ask() {
   }
   const user = getUser();
 
-  const onSubmitChat = () => {
+  const onSubmitChat = async () => {
     if (!text) return;
-    if (socket.connected) {
-      socket.emit("teir_1", { text, user: user });
-    }
+    setMsgs((msgs) => [{ bot: false, msg: text }, ...msgs]);
+    const res = await fetch(
+      `${process.env.EXPO_PUBLIC_ServerUrl}/chat?prompt=${text}`
+    )
+      .then((res) => res.json())
+      .then((res) => {
+        if (res?.error) throw Error(res.error);
+        return res.res;
+      })
+      .catch((e) => {
+        console.log(e);
+        return ["..."];
+      })
+      .then((res: string[]) =>
+        res
+          .filter((ele) => ele != "")
+          .map((ele) => {
+            return { bot: true, msg: ele };
+          })
+          .reverse()
+      );
+    setMsgs((msgs) => [...res, ...msgs]);
   };
 
   return (
@@ -60,14 +62,9 @@ export default function Ask() {
         data={msgs}
         inverted={true}
         renderItem={({ item }) => (
-          <View
-            style={[
-              styles.ChatItem,
-              item.username == user?.username && styles.ChatItemSelf,
-            ]}
-          >
+          <View style={[styles.ChatItem, !item.bot && styles.ChatItemSelf]}>
             <ThemedText style={styles.ChatItemUsername}>
-              -{item.username}
+              -{item.bot ? "Bot" : user?.username}
             </ThemedText>
             <ThemedText style={styles.ChatItemMsg}>{item.msg}</ThemedText>
           </View>
@@ -93,7 +90,7 @@ export default function Ask() {
           <TouchableOpacity
             onPress={onSubmitChat}
             style={styles.ChatBoxButton}
-            accessibilityLabel="Learn more about this purple button"
+            accessibilityLabel="Send"
           >
             <Ionicons size={32} name="send" />
           </TouchableOpacity>

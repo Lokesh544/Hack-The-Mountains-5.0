@@ -16,10 +16,7 @@ import PleaseLogin from "@/components/basic/PleaseLogin";
 
 export default function Chat() {
   const [text, onChangeText] = useState<string>();
-  const [msgs, setMsgs] = useState<{ username: string; msg: string }[]>([
-    { username: "lokesh", msg: "Yeah, How are you?" },
-    { username: "Jas", msg: "Great, Great" },
-  ]);
+  const [msgs, setMsgs] = useState<{ username: string; msg: string }[]>([]);
   const inputRef = useRef<TextInput>(null);
 
   useEffect(() => {
@@ -93,7 +90,7 @@ export default function Chat() {
           <TouchableOpacity
             onPress={onSubmitChat}
             style={styles.ChatBoxButton}
-            accessibilityLabel="Learn more about this purple button"
+            accessibilityLabel="Send"
           >
             <Ionicons size={32} name="send" />
           </TouchableOpacity>

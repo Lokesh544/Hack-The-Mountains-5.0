@@ -1,7 +1,7 @@
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 class LLM_Model:
-    def __init__(self, model_path = "models") -> None:
+    def __init__(self, model_path = "gpt2") -> None:
         self.model_path = model_path
         self._loadModel()
 
